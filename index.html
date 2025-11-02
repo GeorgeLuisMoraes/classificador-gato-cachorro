@@ -20,14 +20,33 @@
 
   <script>
     const URL = "https://teachablemachine.withgoogle.com/models/[...]"; 
-    let model;
+    let model, isModelReady = false;
 
-    async function init() {
-      const modelURL = URL + "model.json";
-      const metadataURL = URL + "metadata.json";
-      model = await tmImage.load(modelURL, metadataURL);
+async function init() {
+  document.getElementById('result').innerText = "Carregando modelo...";
+  const modelURL = URL + "model.json";
+  const metadataURL = URL + "metadata.json";
+  model = await tmImage.load(modelURL, metadataURL);
+  isModelReady = true;
+  document.getElementById('result').innerText = "Modelo pronto! Envie uma imagem.";
+}
+init();
+
+async function loadImage(event) {
+  const image = document.getElementById('preview');
+  image.src = URL.createObjectURL(event.target.files[0]);
+  image.onload = async () => {
+    if (!isModelReady) {
+      document.getElementById('result').innerText = "Modelo ainda carregando...";
+      return;
     }
-    init();
+    const prediction = await model.predict(image);
+    const best = prediction.reduce((a, b) => a.probability > b.probability ? a : b);
+    const emoji = best.className.toLowerCase().includes("gato") ? "🐱" : "🐶";
+    document.getElementById('result').innerText = `É um ${best.className}! ${emoji}`;
+  };
+}
+
 
     async function loadImage(event) {
       const image = document.getElementById('preview');
@@ -42,3 +61,4 @@
   </script>
 </body>
 </html>
+
